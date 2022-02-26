@@ -1,0 +1,32 @@
+# Stage 1
+FROM node:14 as builder
+
+WORKDIR /client
+
+COPY package*.json .
+
+RUN npm install
+
+COPY . .
+
+ARG REACT_APP_API_BASE_URL
+ENV REACT_APP_API_BASE_URL=$REACT_APP_API_BASE_URL
+# ENV REACT_APP_API_BASE_URL='http://localhost:6868/api/'
+
+#test
+RUN npm run build
+
+# # local
+# EXPOSE 8080
+
+# Stage 2
+FROM nginx:1.17.10-alpine
+
+#copies static files from containers /app directory to new /app WORKDIR
+COPY --from=builder /client/build /usr/share/nginx/html
+# COPY /client/nginx/nginx.conf /etc/nginx/nginx.conf
+# COPY ./nginx/nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+
+CMD nginx -g 'daemon off;'

@@ -1,0 +1,53 @@
+version: '3.8'
+services:
+  mongodb:
+    image: mongo:4.4-bionic
+    env_file: 
+      - ./.env
+    ports:
+      - "27017:27017"
+    restart: unless-stopped      
+    volumes:
+      - db:/data/db
+    networks:
+      - docker-app
+  server:
+    image: backend-dev
+    depends_on:
+      - mongodb
+    build:
+      context: ./server
+      dockerfile: Dockerfile-dev
+    restart: unless-stopped
+    env_file: 
+      - ./.env
+    ports:
+      - "6868:6868"
+    volumes:
+      - ./server:/server
+      - /app/node_modules
+    networks:
+      - docker-app
+  client:
+    image: frontend-dev
+    depends_on:
+      - server
+    env_file: 
+      - ./.env      
+    build:
+      context: ./client
+      dockerfile: Dockerfile-dev
+    stdin_open: true
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./client:/client
+      - /app/node_modules      
+    networks:
+      - docker-app
+networks:
+  docker-app:
+    driver: bridge
+volumes:
+  db:
+    driver: local
